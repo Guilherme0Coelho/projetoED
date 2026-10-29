@@ -1,0 +1,11 @@
+{
+  "name": "pdf-builder",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "node build-pdf.mjs" },
+  "dependencies": {
+    "highlight.js": "^11.9.0",
+    "marked": "^12.0.2",
+    "mermaid": "^10.9.1"
+  }
+}

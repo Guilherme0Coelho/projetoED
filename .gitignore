@@ -1,0 +1,18 @@
+# Backend
+backend/target/
+*.class
+*.jar
+*.war
+*.log
+
+# Frontend & Docs PDF
+**/node_modules/
+frontend/dist/
+docs/pdf/Documentacao.html
+
+# Ambiente / IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loja ED — Protótipo UX (clicável)</title>
+<!-- Protótipo estático: dados fictícios, sem backend. Abra com duplo clique. -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors: { primary: { DEFAULT: '#4F46E5', dark: '#4338CA' } } } } };
+</script>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+<div id="app"></div>
+<script>
+const IMG = '../../frontend/public/images/products/';
+const P = [
+  { id:1, n:'Headphone Bluetooth com Cancelamento de Ruído', c:'Áudio', p:899.90, s:25, i:'fone-bluetooth', d:'Headphone over-ear sem fio com cancelamento ativo de ruído e estojo rígido.', sp:['Tipo: Over-ear','Conexão: Bluetooth 5.0 + cabo P2','Bateria: até 20 h'] },
+  { id:2, n:'Caixa de Som Bluetooth Portátil', c:'Áudio', p:249.00, s:0, i:'caixa-de-som', d:'Caixa de som portátil com som estéreo e alça de transporte.', sp:['Conexão: Bluetooth','Potência: 20 W RMS'] },
+  { id:3, n:'Smartwatch Fitness com Pulseira Cinza', c:'Wearables', p:549.00, s:12, i:'smartwatch', d:'Relógio inteligente com monitoramento de atividades.', sp:['Tela: retangular AMOLED','Pulseira: silicone cinza'] },
+  { id:4, n:'Teclado Mecânico Gamer RGB', c:'Periféricos', p:389.50, s:30, i:'teclado', d:'Teclado mecânico com iluminação RGB por tecla.', sp:['Switch: mecânico','Layout: ABNT2','Conexão: USB'] },
+  { id:5, n:'Mouse Gamer Sem Fio', c:'Periféricos', p:329.90, s:8, i:'mouse', d:'Mouse gamer sem fio de alta precisão com receptor USB.', sp:['Conexão: 2,4 GHz','Sensor: óptico','Botões: programáveis'] },
+  { id:6, n:'Webcam Full HD 1080p', c:'Periféricos', p:299.00, s:40, i:'webcam', d:'Webcam Full HD com microfone integrado.', sp:['Resolução: 1080p','Conexão: USB'] },
+  { id:7, n:'SSD NVMe M.2 1 TB', c:'Armazenamento', p:429.90, s:35, i:'ssd', d:'SSD NVMe M.2 2280 de 1 TB.', sp:['Capacidade: 1 TB','Formato: M.2 2280','Interface: NVMe'] },
+  { id:8, n:'Hub USB-C Multiportas', c:'Acessórios', p:199.00, s:50, i:'hub-usbc', d:'Hub USB-C em alumínio com USB-A, USB-C e leitores SD.', sp:['Conexão: USB-C','Portas: USB-A, USB-C, SD/microSD'] },
+  { id:9, n:'Fone de Ouvido Bluetooth TWS com Case', c:'Áudio', p:179.90, s:22, i:'earbuds', d:'Fones true wireless com case de carregamento.', sp:['Tipo: intra-auricular','Conexão: Bluetooth'] },
+];
+const brl = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const st = { screen:'login', mode:'login', cat:'', q:'', id:null, qty:1, bought:false, err:{}, ok:false };
+const badge = s => s===0 ? ['Esgotado','bg-red-50 text-red-700 border-red-200'] : s<=10 ? [`Últimas ${s} unidades`,'bg-amber-50 text-amber-700 border-amber-200'] : ['Em estoque','bg-green-50 text-green-700 border-green-200'];
+const badgeHtml = s => { const [l,c]=badge(s); return `<span class="inline-block text-xs font-medium border rounded-full px-2 py-0.5 ${c}">${l}</span>`; };
+const go = (screen, extra={}) => { Object.assign(st,{screen},extra); render(); window.scrollTo(0,0); };
+
+function nav(){ return `<header class="bg-white border-b border-slate-200"><div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+  <button onclick="go('catalog')" class="text-xl font-bold text-primary">Loja ED</button>
+  <div class="flex items-center gap-4 text-sm"><span class="hidden sm:inline text-slate-600">Olá, Cliente Teste</span>
+  <button onclick="go('login',{mode:'login',err:{},ok:false})" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100">Sair</button></div></div></header>`; }
+
+function login(){
+  const reg = st.mode==='register', e = st.err;
+  const f = (id,label,type,show=true) => !show ? '' : `<div><label class="block text-sm font-medium mb-1" for="${id}">${label}</label>
+    <input id="${id}" type="${type}" class="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary ${e[id]?'border-red-500 bg-red-50':(Object.keys(e).length||st.ok)&&e[id]===undefined?'border-green-500':'border-slate-300'}">
+    ${e[id]?`<p class="text-xs text-red-600 mt-1">${e[id]}</p>`:''}</div>`;
+  return `<main class="min-h-screen flex items-center justify-center px-4"><form onsubmit="submitLogin(event)" class="w-full max-w-sm bg-white rounded-2xl shadow-md border border-slate-200 p-8 space-y-4">
+    <h1 class="text-2xl font-bold text-center text-primary">Loja ED</h1>
+    <p class="text-center text-sm text-slate-500">${reg?'Crie sua conta':'Entre na sua conta'}</p>
+    ${st.ok?`<div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-3 py-2">${reg?'Conta criada com sucesso!':'Login realizado!'} Redirecionando...</div>`:''}
+    ${e.server?`<div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">${e.server}</div>`:''}
+    ${f('name','Nome','text',reg)}${f('email','E-mail','email')}${f('password','Senha','password')}
+    <button class="w-full bg-primary hover:bg-primary-dark text-white font-medium rounded-lg py-2">${reg?'Cadastrar':'Entrar'}</button>
+    <p class="text-center text-sm text-slate-600">${reg?'Já tem conta?':'Não tem conta?'} <button type="button" class="text-primary font-medium hover:underline" onclick="go('login',{mode:'${reg?'login':'register'}',err:{},ok:false})">${reg?'Entrar':'Cadastre-se'}</button></p>
+    <p class="text-xs text-slate-400 text-center">Dica: use senha "erro123" para simular credenciais inválidas.</p>
+  </form></main>`; }
+
+function submitLogin(ev){
+  ev.preventDefault();
+  const g = id => (document.getElementById(id)||{value:''}).value;
+  const err = {};
+  if (st.mode==='register' && g('name').trim().length<2) err.name='Informe seu nome (mín. 2 caracteres).';
+  if (!/^\S+@\S+\.\S+$/.test(g('email'))) err.email='E-mail inválido.';
+  if (g('password').length<6) err.password='A senha deve ter ao menos 6 caracteres.';
+  if (!Object.keys(err).length && g('password')==='erro123') err.server='E-mail ou senha inválidos';
+  st.err = err;
+  if (Object.keys(err).length) return render();
+  st.ok = true; render(); setTimeout(()=>go('catalog',{ok:false,err:{}}),700);
+}
+
+function catalog(){
+  const cats = [...new Set(P.map(p=>p.c))];
+  const list = P.filter(p => (!st.cat||p.c===st.cat) && p.n.toLowerCase().includes(st.q.toLowerCase()));
+  const chip = a => `px-3 py-1.5 rounded-full text-sm border transition ${a?'bg-primary text-white border-primary':'bg-white border-slate-300 hover:bg-slate-100'}`;
+  return nav()+`<main class="max-w-6xl mx-auto px-4 py-8">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4"><h1 class="text-2xl font-bold">Catálogo</h1>
+  <input id="q" type="search" placeholder="Buscar produto..." value="${st.q}" oninput="st.q=this.value;render(true)" class="w-full sm:w-72 rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"></div>
+  <div class="flex flex-wrap gap-2 mb-6"><button class="${chip(!st.cat)}" onclick="st.cat='';render()">Todos</button>
+  ${cats.map(c=>`<button class="${chip(st.cat===c)}" onclick="st.cat='${c}';render()">${c}</button>`).join('')}</div>
+  ${list.length?'':'<p class="text-slate-500">Nenhum produto encontrado.</p>'}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">${list.map(p=>`
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col">
+      <div class="relative aspect-[3/2] bg-slate-100"><img src="${IMG+p.i}.jpg" alt="${p.n}" class="h-full w-full object-cover ${p.s===0?'opacity-60':''}">
+      <span class="absolute top-2 left-2 text-xs bg-white/90 rounded-full px-2 py-0.5 text-slate-700">${p.c}</span></div>
+      <div class="p-4 flex flex-col flex-1 gap-1"><h3 class="font-semibold leading-snug line-clamp-2 min-h-[2.75rem]">${p.n}</h3>
+      <p class="text-lg font-bold text-primary">${brl(p.p)}</p>${badgeHtml(p.s)}
+      <button onclick="go('detail',{id:${p.id},qty:1,bought:false})" class="mt-3 bg-primary hover:bg-primary-dark text-white rounded-lg py-2 text-sm font-medium">Ver detalhes</button></div></div>`).join('')}</div></main>`; }
+
+function detail(){
+  const p = P.find(x=>x.id===st.id);
+  return nav()+`<main class="max-w-5xl mx-auto px-4 py-8">
+  <nav class="text-sm text-slate-500"><button class="hover:underline" onclick="go('catalog')">Catálogo</button> / ${p.c} / <span class="text-slate-800">${p.n}</span></nav>
+  <div class="mt-6 grid md:grid-cols-2 gap-8 bg-white rounded-2xl border border-slate-200 p-6">
+    <div><div class="aspect-[3/2] overflow-hidden rounded-xl bg-slate-100"><img id="big" src="${IMG+p.i}.jpg" class="h-full w-full object-cover transition"></div>
+    <div class="mt-3 flex gap-2">${[['center',1],['center',1.5],['right',1.5]].map(([pos,sc],k)=>`<button onclick="document.getElementById('big').style.cssText='object-position:${pos};transform:scale(${sc})'" class="h-16 w-20 overflow-hidden rounded-lg border-2 ${k?'border-slate-200':'border-primary'}"><img src="${IMG+p.i}.jpg" style="object-position:${pos};transform:scale(${sc})" class="h-full w-full object-cover"></button>`).join('')}</div></div>
+    <div class="flex flex-col"><h1 class="text-2xl md:text-3xl font-bold">${p.n}</h1><p class="text-2xl font-bold text-primary mt-2">${brl(p.p)}</p>
+    <div class="mt-2">${badgeHtml(p.s)}</div><p class="mt-4 text-slate-600">${p.d}</p>
+    <h2 class="font-semibold mt-4 mb-2">Especificações técnicas</h2>
+    <dl class="text-sm divide-y divide-slate-100 border border-slate-200 rounded-lg">${p.sp.map(l=>{const [k,...v]=l.split(':');return `<div class="flex px-3 py-2 gap-3"><dt class="w-2/5 text-slate-500">${k}</dt><dd class="flex-1">${v.join(':').trim()}</dd></div>`}).join('')}</dl>
+    ${st.bought?`<div class="mt-4 bg-green-50 border border-green-200 text-green-700 rounded-lg px-3 py-2 text-sm">Compra simulada realizada com sucesso! (${st.qty} un.)</div>`:''}
+    <div class="mt-auto pt-6 flex items-center gap-3">
+      <div class="flex items-center border border-slate-300 rounded-lg"><button ${st.qty<=1?'disabled':''} onclick="st.qty--;render()" class="px-3 py-2 disabled:opacity-40">−</button><span class="w-8 text-center">${st.qty}</span><button ${st.qty>=p.s?'disabled':''} onclick="st.qty++;render()" class="px-3 py-2 disabled:opacity-40">+</button></div>
+      <button ${p.s===0?'disabled':''} onclick="st.bought=true;render()" class="flex-1 bg-primary hover:bg-primary-dark disabled:opacity-50 text-white font-medium rounded-lg py-3">${p.s===0?'Indisponível':'Comprar'}</button></div>
+    </div></div></main>`; }
+
+function render(keepFocus){
+  const html = { login, catalog, detail }[st.screen]();
+  document.getElementById('app').innerHTML = html;
+  if (keepFocus) { const q=document.getElementById('q'); if(q){q.focus(); q.setSelectionRange(q.value.length,q.value.length);} }
+}
+render();
+</script>
+</body>
+</html>
